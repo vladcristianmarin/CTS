@@ -1,81 +1,92 @@
 package ro.ase.acs.controllers;
 
+import static ro.ase.acs.constants.SQLConstants.*;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 public class SQLController {
 
-  public static void main(String[] args) {
+  private Connection conn;
+  private PreparedStatement insertEmployee;
+
+  private static final String RESET_COLOR = "\u001B[0m";
+  private static final String SUCCESS_COLOR = "\u001B[32m";
+  private static final String ERROR_COLOR = "\u001B[31m";
+
+  public void open() {
     try {
-      Class.forName("org.sqlite.JDBC");
-      Connection connection = DriverManager.getConnection(
-        "jdbc:sqlite:database.db"
-      );
-      connection.setAutoCommit(false);
-
-      createTable(connection);
-      insertData(connection);
-      readData(connection);
-
-      connection.close();
+      this.conn = DriverManager.getConnection(CONNECTION_STRING);
+      this.insertEmployee = conn.prepareStatement(INSERT_EMPLOYEE);
+      System.out.println(
+          SUCCESS_COLOR + "Connected to the database!" + RESET_COLOR);
     } catch (Exception e) {
-      e.printStackTrace();
+      System.out.println(
+          ERROR_COLOR + "Couldn't connect to database..." + System.lineSeparator() + e.getMessage() + RESET_COLOR);
+      System.exit(-1);
     }
   }
 
-  private static void createTable(Connection connection) throws SQLException {
-    String sqlDrop = "DROP TABLE IF EXISTS employees";
-    String sqlCreate =
-      "CREATE TABLE employees(id INTEGER PRIMARY KEY," +
-      "name TEXT, address TEXT, salary REAL)";
-
-    Statement statement = connection.createStatement();
-    statement.executeUpdate(sqlDrop);
-    statement.executeUpdate(sqlCreate);
-    statement.close();
-    connection.commit();
-  }
-
-  private static void insertData(Connection connection) throws SQLException {
-    String sqlInsert =
-      "INSERT INTO employees VALUES(1, 'Popescu Ion', 'Bucharest', 4000)";
-    Statement statement = connection.createStatement();
-    statement.executeUpdate(sqlInsert);
-    statement.close();
-
-    String sqlInsertWithParams = "INSERT INTO employees VALUES (?,?,?,?)";
-    PreparedStatement preparedStatement = connection.prepareStatement(
-      sqlInsertWithParams
-    );
-    preparedStatement.setInt(1, 2);
-    preparedStatement.setString(2, "Ionescu Vasile");
-    preparedStatement.setString(3, "Brasov");
-    preparedStatement.setDouble(4, 4500);
-    preparedStatement.executeUpdate();
-    preparedStatement.close();
-
-    connection.commit();
-  }
-
-  private static void readData(Connection connection) throws SQLException {
-    String sqlSelect = "SELECT * FROM employees";
-    Statement statement = connection.createStatement();
-    ResultSet rs = statement.executeQuery(sqlSelect);
-    while (rs.next()) {
-      int id = rs.getInt("id");
-      System.out.println("id: " + id);
-      String name = rs.getString(2);
-      System.out.println("name: " + name);
-      String address = rs.getString("address");
-      System.out.println("address: " + address);
-      double salary = rs.getDouble("salary");
-      System.out.println("salary: " + salary);
+  public void close() {
+    try {
+      assert insertEmployee != null;
+      insertEmployee.close();
+      assert conn != null;
+      conn.close();
+    } catch (Exception e) {
+      System.out.println(
+          ERROR_COLOR + "Couldn't close the database..." + System.lineSeparator() + e.getMessage() + RESET_COLOR);
+      System.exit(-1);
     }
-    rs.close();
-    statement.close();
+  }
+
+  public void createTable() {
+    try {
+      Statement statement = conn.createStatement();
+      statement.executeUpdate(DROP_EMPLOYEES_TABLE);
+      statement.executeUpdate(CREATE_TABLE_EMPLOYEES);
+      statement.close();
+    } catch (Exception e) {
+      System.out.println(ERROR_COLOR + "Couldn't create " + TABLE_EMPLOYEES + " table"
+          + System.lineSeparator() + e.getMessage() + RESET_COLOR);
+    }
+  }
+
+  public void insertData(Integer id, String name, String address, Double salary) {
+    try {
+      insertEmployee.setInt(INDEX_EMPLOYEE_ID, id);
+      insertEmployee.setString(INDEX_EMPLOYEE_NAME, name);
+      insertEmployee.setString(INDEX_EMPLOYEE_ADDRESS, address);
+      insertEmployee.setDouble(INDEX_EMPLOYEE_SALARY, salary);
+      insertEmployee.executeUpdate();
+      conn.commit();
+    } catch (Exception e) {
+      System.out.println(ERROR_COLOR + "Couldn't insert into " + TABLE_EMPLOYEES
+          + System.lineSeparator() + e.getMessage() + RESET_COLOR);
+    }
+  }
+
+  public void printData() {
+    try {
+      Statement statement = conn.createStatement();
+      ResultSet rs = statement.executeQuery(QUERY_EMPLOYEES_ALL);
+      while (rs.next()) {
+        int id = rs.getInt("id");
+        String name = rs.getString(2);
+        String address = rs.getString("address");
+        double salary = rs.getDouble("salary");
+        System.out
+            .println("ID: " + id + "," + "NAME: " + name + "," + "ADDRESS: " + address + "," + "SALARY: " + salary);
+      }
+      rs.close();
+      statement.close();
+    } catch (Exception e) {
+      System.out.println(
+          ERROR_COLOR + "Couldn't print " + TABLE_EMPLOYEES + " table" +
+              System.lineSeparator() + e.getMessage() + RESET_COLOR);
+    }
   }
 }
