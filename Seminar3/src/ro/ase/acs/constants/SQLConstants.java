@@ -1,9 +1,12 @@
 package ro.ase.acs.constants;
 
+import java.io.File;
+
 public class SQLConstants {
+  private static final File file = new File("db");
 
   public static final String DB_NAME = "database.db";
-  public static final String CONNECTION_STRING = "jdbc:sqlite:/../../../../../db/database.db";
+  public static final String CONNECTION_STRING = "jdbc:sqlite:" + file.getAbsolutePath() + "/" + DB_NAME;
 
   public static final String TABLE_EMPLOYEES = "employees";
   public static final String COLUMN_EMPLOYEE_ID = "id";

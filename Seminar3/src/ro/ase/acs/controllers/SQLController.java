@@ -1,6 +1,7 @@
 package ro.ase.acs.controllers;
 
 import static ro.ase.acs.constants.SQLConstants.*;
+import static ro.ase.acs.constants.Colors.*;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,15 +16,12 @@ public class SQLController implements DbController {
   private Connection conn;
   private PreparedStatement insertEmployee;
 
-  private static final String RESET_COLOR = "\u001B[0m";
-  private static final String SUCCESS_COLOR = "\u001B[32m";
-  private static final String ERROR_COLOR = "\u001B[31m";
-
   @Override
   public void open() {
     try {
+      Class.forName("org.sqlite.JDBC");
       this.conn = DriverManager.getConnection(CONNECTION_STRING);
-      this.insertEmployee = conn.prepareStatement(INSERT_EMPLOYEE);
+      this.conn.setAutoCommit(false);
       System.out.println(
           SUCCESS_COLOR + "Connected to the database!" + RESET_COLOR);
     } catch (Exception e) {
@@ -40,9 +38,21 @@ public class SQLController implements DbController {
       insertEmployee.close();
       assert conn != null;
       conn.close();
+      System.out.println(
+          SUCCESS_COLOR + "Database closed!" + RESET_COLOR);
     } catch (Exception e) {
       System.out.println(
           ERROR_COLOR + "Couldn't close the database..." + System.lineSeparator() + e.getMessage() + RESET_COLOR);
+      System.exit(-1);
+    }
+  }
+
+  private void prepareStatements() {
+    try {
+      this.insertEmployee = conn.prepareStatement(INSERT_EMPLOYEE);
+    } catch (Exception e) {
+      System.out.println(
+          ERROR_COLOR + "Couldn't create prepared statements" + System.lineSeparator() + e.getMessage() + RESET_COLOR);
       System.exit(-1);
     }
   }
@@ -53,7 +63,10 @@ public class SQLController implements DbController {
       Statement statement = conn.createStatement();
       statement.executeUpdate(DROP_EMPLOYEES_TABLE);
       statement.executeUpdate(CREATE_TABLE_EMPLOYEES);
+      prepareStatements();
       statement.close();
+      System.out.println(
+          SUCCESS_COLOR + "Table " + TABLE_EMPLOYEES + " created!" + RESET_COLOR);
     } catch (Exception e) {
       System.out.println(ERROR_COLOR + "Couldn't create " + TABLE_EMPLOYEES + " table"
           + System.lineSeparator() + e.getMessage() + RESET_COLOR);
@@ -69,6 +82,8 @@ public class SQLController implements DbController {
       insertEmployee.setDouble(INDEX_EMPLOYEE_SALARY, salary);
       insertEmployee.executeUpdate();
       conn.commit();
+      System.out.println(
+          SUCCESS_COLOR + "Data inserted!" + RESET_COLOR);
     } catch (Exception e) {
       System.out.println(ERROR_COLOR + "Couldn't insert into " + TABLE_EMPLOYEES
           + System.lineSeparator() + e.getMessage() + RESET_COLOR);
@@ -86,7 +101,7 @@ public class SQLController implements DbController {
         String address = rs.getString("address");
         double salary = rs.getDouble("salary");
         System.out
-            .println("ID: " + id + "," + "NAME: " + name + "," + "ADDRESS: " + address + "," + "SALARY: " + salary);
+            .println("ID: " + id + ", " + "NAME: " + name + ", " + "ADDRESS: " + address + ", " + "SALARY: " + salary);
       }
       rs.close();
       statement.close();
