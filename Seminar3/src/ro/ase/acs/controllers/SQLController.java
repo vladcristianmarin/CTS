@@ -8,7 +8,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-public class SQLController {
+import ro.ase.acs.interfaces.DbController;
+
+public class SQLController implements DbController {
 
   private Connection conn;
   private PreparedStatement insertEmployee;
@@ -17,6 +19,7 @@ public class SQLController {
   private static final String SUCCESS_COLOR = "\u001B[32m";
   private static final String ERROR_COLOR = "\u001B[31m";
 
+  @Override
   public void open() {
     try {
       this.conn = DriverManager.getConnection(CONNECTION_STRING);
@@ -30,6 +33,7 @@ public class SQLController {
     }
   }
 
+  @Override
   public void close() {
     try {
       assert insertEmployee != null;
@@ -43,6 +47,7 @@ public class SQLController {
     }
   }
 
+  @Override
   public void createTable() {
     try {
       Statement statement = conn.createStatement();
@@ -55,6 +60,7 @@ public class SQLController {
     }
   }
 
+  @Override
   public void insertData(Integer id, String name, String address, Double salary) {
     try {
       insertEmployee.setInt(INDEX_EMPLOYEE_ID, id);
@@ -69,6 +75,7 @@ public class SQLController {
     }
   }
 
+  @Override
   public void printData() {
     try {
       Statement statement = conn.createStatement();
