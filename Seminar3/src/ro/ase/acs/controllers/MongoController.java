@@ -1,4 +1,4 @@
-package ro.ase.acs.nosql;
+package ro.ase.acs.controllers;
 
 import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
@@ -6,7 +6,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-public class Main {
+public class MongoController {
 
   public static void main(String[] args) {
     MongoClient mongoClient = new MongoClient("localhost", 27017);
