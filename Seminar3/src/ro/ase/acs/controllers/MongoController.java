@@ -1,41 +1,53 @@
 package ro.ase.acs.controllers;
 
+import static ro.ase.acs.constants.MongoConstants.*;
+
 import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-public class MongoController {
+import ro.ase.acs.interfaces.DbController;
 
-  public static void main(String[] args) {
-    MongoClient mongoClient = new MongoClient("localhost", 27017);
-    MongoDatabase mongoDb = mongoClient.getDatabase("test");
+public class MongoController implements DbController {
+  private MongoClient client;
+  private MongoDatabase db;
 
-    if (mongoDb.getCollection("employees") != null) {
-      mongoDb.getCollection("employees").drop();
+  @Override
+  public void open() {
+    client = new MongoClient("localhost", 27017);
+    db = client.getDatabase("test");
+
+    if (db.getCollection(COLLECTION_EMPLOYEES) != null) {
+      db.getCollection(COLLECTION_EMPLOYEES).drop();
     }
+  }
 
-    mongoDb.createCollection("employees");
+  @Override
+  public void close() {
+    client.close();
+  }
 
-    Document employee1 = new Document()
-      .append("name", "Popescu Ion")
-      .append("address", "Bucharest")
-      .append("salary", 4000);
+  @Override
+  public void createTable() {
+    db.createCollection(COLLECTION_EMPLOYEES);
+  }
 
-    MongoCollection<Document> collection = mongoDb.getCollection("employees");
-    collection.insertOne(employee1);
+  @Override
+  public void insertData(Integer code, String name, String address, Double salary) {
+    Document emp = new Document();
+    emp.append(FIELD_EMPLOYEE_CODE, code);
+    emp.append(FIELD_EMPLOYEE_NAME, name);
+    emp.append(FIELD_EMPLOYEE_ADDRESS, address);
+    emp.append(FIELD_EMPLOYEE_SALARY, salary);
+    db.getCollection(COLLECTION_EMPLOYEES).insertOne(emp);
+  }
 
-    Document employee2 = new Document()
-      .append("name", "Ionescu Vasile")
-      .append("salary", 4500);
-    collection.insertOne(employee2);
-
-    FindIterable<Document> result = collection.find();
+  @Override
+  public void printData() {
+    FindIterable<Document> result = db.getCollection(COLLECTION_EMPLOYEES).find();
     for (Document doc : result) {
       System.out.println(doc);
     }
-
-    mongoClient.close();
   }
 }
